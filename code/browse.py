@@ -2,7 +2,7 @@
 
 Code to browse Semcor.
 
-Should run in both Python 2 and Python 3.
+Should run in both Python 2.7 and Python 3.
 
 Usage:
 
@@ -27,10 +27,8 @@ TODO:
 
 - the browser itself
 - most of the above requirements
-    - requires several more indexes
+    - maybe requires several more indexes
 - bundle semcor into this repository
-- for compiled sources maintain both python 2 and python 3 versions of pickle files
-    - compile into data/brownN/python_version
 - semcor is now initialized on one corpus, should perhaps be a list
 - when loading, print warning if sources have not been compiled yet
     - include note that python version matters
