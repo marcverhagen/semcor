@@ -50,6 +50,7 @@ class Semcor(object):
         self.fnames = []
         self.files = []
         self.lemma_idx = {}
+        self.file_idx = {}
         self._init_files()
 
     def __str__(self):
@@ -99,13 +100,18 @@ class Semcor(object):
         print("   loading:  %4.2f seconds" % (t1 - t0))
         print("   indexing: %4.2f seconds" % (t2 - t1))
         print()
-        
+
     def index(self):
         """Create indexes from all individual file-level indexes."""
         self.lemma_idx = {}
+        self.file_idx = {}
         for semcor_file in self.files:
+            self.file_idx[os.path.basename(semcor_file.fname)] = semcor_file
             for form in semcor_file.forms:
                 self.lemma_idx.setdefault(form.lemma,[]).append(form)
+
+    def get_file(self, fname):
+        return self.file_idx.get(fname)
 
 
 class SemcorFile(object):
@@ -144,14 +150,22 @@ class SemcorFile(object):
         with open(pickle_file, 'wb') as fh:
             pickle.dump(self, fh)
 
+    def get_sentence(self, sent):
+        for par in self.paragraphs:
+            for sentence in par.sentences:
+                if sentence.sid == sent:
+                    return sentence
+        return None
+
+
 
 if __name__ == '__main__':
 
     semcor = Semcor(BROWN1)
 
     if len(sys.argv) > 1 and sys.argv[1] == '--compile':
-        semcor.compile(5)
+        semcor.compile(10)
         exit()
         
-    semcor.load(5)
+    semcor.load(10)
     print(semcor)

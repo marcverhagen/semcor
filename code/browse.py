@@ -10,17 +10,21 @@ $ python browse.py
 
 This assumes that sources have been compiled (see semcor.py).
 
+Current functionality:
 
-Browser requirements
+- printing statistics for a lemma (all senses)
+- searching for a lemma
+- display a paragraph that contains a given sentence
 
+Further browser requirements
+
+- give synset identifiers (new style, with lemmas) and definitions
 - give me the documents/sentences where those two senses co-occur
 - search for a synset
-x- search for a word
 - search for occurrences of pairs of basic types
-- display a document
-- display a paragraph
-x- display a sentence
-x- statistics on all senses for a word
+- display context for a sentence (not the paragraph, but a window of
+  neighoring sentences)
+- add basic types to statistics on all senses for a word
 
 
 TODO:
@@ -38,7 +42,7 @@ TODO:
 
 from __future__ import print_function
 
-import sys
+import sys, re
 
 from semcor import Semcor, SemcorFile, BROWN1, BROWN2
 from utils import read_input
@@ -54,21 +58,30 @@ class Browser(object):
     def userloop(self):
         while True:
             print('*> ', end='')
-            user_input = read_input()
-            if user_input.strip() == 'q':
+            user_input = read_input().strip()
+            if user_input == 'q':
                 break
-            elif user_input == 'h':
-                print('h - help')
-                print('n LEMMA - search for noun LEMMA')
+            elif user_input in ('?', 'h', 'help'):
+                print_help()
             elif user_input == 't':
                 # convenience option for testing
                 self.show_stats('walk')
-            elif user_input.startswith('stats '):
-                lemma = get_lemma(user_input)
-                self.show_stats(lemma)
+                self.show_paragraph('br-a11-28')
             elif user_input.startswith('s '):
-                lemma = get_lemma(user_input)
-                self.show_lemma(lemma)
+                self.show_stats(get_lemma(user_input))
+            elif user_input.startswith('v '):
+                self.show_verb(get_lemma(user_input))
+            elif user_input.startswith('n '):
+                self.show_noun(get_lemma(user_input))
+            elif user_input.startswith('a '):
+                self.show_adjective(get_lemma(user_input))
+            elif user_input.startswith('r '):
+                self.show_adverb(get_lemma(user_input))
+            elif user_input.startswith('p '):
+                self.show_paragraph(get_sentence(user_input))
+            else:
+                print('\nUnknown command, available commands:')
+                print_help()
 
     def get_lemmas(self, lemma):
         return self.semcor.lemma_idx.get(lemma, [])
@@ -82,17 +95,66 @@ class Browser(object):
                     wf.sent.pp(highlight=wf.position)
         print()
 
+    def show_noun(self, lemma):
+        idx = index_lemmas(self.get_lemmas(lemma))
+        for pos in idx:
+            self.show_senses(idx, pos, 'NN')
+        print()
+
+    def show_verb(self, lemma):
+        idx = index_lemmas(self.get_lemmas(lemma))
+        for pos in idx:
+            self.show_senses(idx, pos, 'VB')
+        print()
+
+    def show_adjective(self, lemma):
+        idx = index_lemmas(self.get_lemmas(lemma))
+        for pos in idx:
+            self.show_senses(idx, pos, 'JJ')
+        print()
+
+    def show_adverb(self, lemma):
+        idx = index_lemmas(self.get_lemmas(lemma))
+        for pos in idx:
+            self.show_senses(idx, pos, 'RB')
+        print()
+
+    def show_senses(self, idx, pos, tag_prefix):
+        if pos.startswith(tag_prefix):
+            for sense in idx[pos]:
+                print('\n', BOLD + BLUE, idx[pos][sense][0], END, '\n', sep='')
+                for wf in idx[pos][sense]:
+                    wf.sent.pp(highlight=wf.position)
+
     def show_stats(self, lemma):
         print()
         lemmas = self.get_lemmas(lemma)
         lemma_idx = index_lemmas(lemmas)
-        print('Lemma occurs', len(lemmas), 'times\n')
+        print('Occurrances:', len(lemmas), '\n')
         for pos in lemma_idx:
             print(pos)
             for sense in lemma_idx[pos]:
                 print("   wnsn=%s lexsn=s%s  -- %s occurrences" % \
                           (sense[0], sense[1], len(lemma_idx[pos][sense])))
         print()
+
+    def show_paragraph(self, sentence):
+        result = re.match(r"(.*)-(\d+)$", sentence)
+        if result is None:
+            print("Could not get file name and sentence number from input")
+            return
+        fname = result.group(1)
+        sent = result.group(2)
+        semcor_file = self.semcor.get_file(fname)
+        if semcor_file is None:
+            print("Could not find file %s" % fname)
+        else:
+            sentence = semcor_file.get_sentence(sent)
+            if sentence is None:
+                print("Could not find sentence %s" % sent)
+            print()
+            paragraph = sentence.para.pp()
+            print()
 
 
 def index_lemmas(lemmas):
@@ -112,11 +174,28 @@ def get_lemma(user_input):
         lemma = user_input.split(maxsplit=1)[1]
         return lemma.replace(' ', '_')
 
+def get_sentence(user_input):
+    # This happens to be the same as getting the lemma (but replacing spaces
+    # with nderscores will never happen).
+    return get_lemma(user_input)
+
+
+def print_help():
+    print()
+    print('h        -  help')
+    print('s LEMMA  -  show statistics for LEMMA')
+    print('n LEMMA  -  search for noun LEMMA')
+    print('v LEMMA  -  search for verb LEMMA')
+    print('a LEMMA  -  search for adjective LEMMA')
+    print('r LEMMA  -  search for adverb LEMMA')
+    print('p SENT   -  print paragraph with sentence SENT')
+    print()
+
 
 if __name__ == '__main__':
 
     # this assumes that sources have been compiled
     semcor = Semcor(BROWN1)
-    semcor.load(5)
+    semcor.load(10)
     Browser(semcor)
     

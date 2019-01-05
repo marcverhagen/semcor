@@ -6,7 +6,7 @@ from __future__ import print_function
 
 import os
 
-from ansi import BLUE, GREEN, GREY, END
+from ansi import BOLD, BLUE, GREEN, GREY, END
 
 
 class SemcorObject(object):
@@ -27,7 +27,7 @@ class SemcorObject(object):
 class Paragraph(SemcorObject):
 
     def __init__(self, pid):
-        self.pid = pid
+        self.pid = pid         # <string>
         self.sentences = []
 
     def add_sentence(self, sent):
@@ -52,8 +52,8 @@ class Sentence(SemcorObject):
     def __init__(self, semcor_file, para, sid):
         self.fname = os.path.basename(semcor_file.fname)
         self.para = para
-        self.pid = para.pid
-        self.sid = sid
+        self.pid = para.pid     # <string>
+        self.sid = sid          # <string>
         self.wfs = []
 
     def is_sentence(self):
@@ -73,7 +73,7 @@ class Sentence(SemcorObject):
         print("%s%s%s-%s%s: " % (GREY, GREEN, self.fname, self.sid, END), end='')
         for wf in self.wfs:
             if wf.is_word_form() and highlight == wf.position:
-                print(BLUE + wf.text + END, end=' ')
+                print(BOLD + BLUE + wf.text + END, end=' ')
             #elif wf.has_sense():
             #    print(BLUE+wf.text+END, end=' ')
             else:
