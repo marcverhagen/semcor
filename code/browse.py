@@ -11,13 +11,11 @@ $ python browse.py
 This assumes that sources have been compiled (see semcor.py).
 
 Current functionality:
-
 - printing statistics for a lemma (all senses)
 - searching for a lemma
 - display a paragraph that contains a given sentence
 
 Further browser requirements
-
 - give synset identifiers (new style, with lemmas) and definitions
 - give me the documents/sentences where those two senses co-occur
 - search for a synset
@@ -26,14 +24,7 @@ Further browser requirements
   neighoring sentences)
 - add basic types to statistics on all senses for a word
 
-
 TODO:
-
-- the browser itself
-- most of the above requirements
-    - maybe requires several more indexes
-- bundle semcor into this repository
-- semcor is now initialized on one corpus, should perhaps be a list
 - when loading, print warning if sources have not been compiled yet
     - include note that python version matters
 - make sentences a linked list
@@ -44,7 +35,7 @@ from __future__ import print_function
 
 import sys, re, textwrap
 
-from semcor import Semcor, SemcorFile, BROWN1, BROWN2
+from semcor import Semcor, SemcorFile
 from utils import read_input
 from ansi import BLUE, BOLD, END
 
@@ -214,7 +205,7 @@ def print_help():
 if __name__ == '__main__':
 
     # this assumes that sources have been compiled
-    semcor = Semcor(BROWN1)
+    semcor = Semcor()
     semcor.load(10)
     Browser(semcor)
     

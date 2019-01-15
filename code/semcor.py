@@ -1,8 +1,7 @@
-"""
+"""Interface to Semcor.
 
-Interface to Semcor.
-
-Should run in both Python 2 and Python 3.
+Should run in both Python 2 and Python 3, but {Python 3 is recommended because
+it is much faster for this code.
 
 
 Usage fron command line:
@@ -15,19 +14,24 @@ The first invocation compiles semcor files, the second loads compiled files.
 Usage as an imported module:
 
 >>> from semcor import load_semcor
->>> sc = load_semcor(SOME_DIRECTORY)
+>>> sc = load_semcor(10)
+
+The argument sets a limit to the number of files to load, without it all files
+are loaded.
 
 If sources have not yet been compiled you first need to do this:
 
 >>> from semcor import compile_semcor
->>> compile_semcor(SOME_DIRECTORY)
+>>> compile_semcor()
 
+Here all files are compiled, add a numerical argument to restrict thenumber of
+files to compile.
 
 """
 
 from __future__ import print_function
 
-import os, sys, bs4, pickle, time
+import os, sys, bs4, pickle, time, glob
 
 import parser
 from utils import pickle_file_name, Synset
@@ -35,45 +39,47 @@ from utils import pickle_file_name, Synset
 
 SEMCOR = '../data/semcor3.0'
 
-BROWN1 = os.path.join(SEMCOR, 'brown1', 'tagfiles')
-BROWN2 = os.path.join(SEMCOR, 'brown2', 'tagfiles')
+# The files are all the files in the brown1 and brown2 subsets of semcor (and
+# does not include brownv, which has verbs only), in lexicographic order
+SEMCOR_FILES = sorted(glob.glob(os.path.join(SEMCOR, 'brown[12]/tagfiles/*')))
 
+# Mappings to wordnet synsets
 MAPPINGS = '../data/corelex/corelex-3.1-semcor_lemma2synset.txt'
 
 
-def load_semcor(directory, maxfiles=999):
-    """Load the semcor files in directory and return a Semcor instance. The maximum
-    number of files to load is defined by the optional second argument."""
-    sc = Semcor(directory)
+def load_semcor(maxfiles=999):
+    """Load the semcor files and return a Semcor instance. The maximum number of
+    files to load is defined by the optional argument, the default is to load
+    all files."""
+    sc = Semcor()
     sc.load(maxfiles)
     return sc
 
 
-def compile_semcor(directory, maxfiles=999):
-    """Compile maxfiles files from the given semcor directory."""
-    sc = Semcor(directory)
+def compile_semcor(maxfiles=999):
+    """Compile semcor files, default is to compile all files but maxfiles can be
+    used to restrict the number."""
+    sc = Semcor()
     sc.compile(maxfiles)
 
 
 class Semcor(object):
 
-    def __init__(self, corpus):
+    def __init__(self):
 
-        self.corpus = corpus
-        self.fnames = []
+        self.fnames = SEMCOR_FILES
         self.files = []
+        self.loaded = 0
         self.lemma_idx = {}
         self.file_idx = {}
         self.mappings = {}
         self._init_files()
 
     def __str__(self):
-        return "<Semcor on %s with %d files>" % \
-            (self.corpus.split(os.path.sep)[-2], len(self.files))
+        return "<Semcor instances with %d files>" % self.loaded
 
     def _init_files(self):
-        self.fnames = [os.path.join(BROWN1, fname)
-                       for fname in sorted(os.listdir(self.corpus))]
+        self.fnames = glob.glob(os.path.join(SEMCOR, 'brown?', 'tagfiles', '*'))
 
     def compile(self, limit=999):
         """Compile the files in the corpus. Compiling means reading all files,
@@ -102,6 +108,7 @@ class Semcor(object):
         longer to compile."""
         t0 = time.time()
         self.file = []
+        self.loaded = len(self.fnames) if limit == 999 else limit
         for fname in self.fnames[:limit]:
             pickle_file = pickle_file_name(fname)
             print('Loading', pickle_file)
@@ -199,7 +206,7 @@ class SemcorFile(object):
 if __name__ == '__main__':
 
     if len(sys.argv) > 1 and sys.argv[1] == '--compile':
-        compile_semcor(BROWN1, 10)
+        compile_semcor(10)
     else:
-        sc = load_semcor(BROWN1, 10)
+        sc = load_semcor(10)
         print(sc)
