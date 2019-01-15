@@ -14,16 +14,13 @@ The first invocation compiles semcor files, the second loads compiled files.
 
 Usage as an imported module:
 
->>> from semcor import Semcor
->>> sc = Semcor(SOME_DIRECTORY)
->>> sc.load()
+>>> from semcor import load_semcor
+>>> sc = load_semcor(SOME_DIRECTORY)
 
-In case sources have not yet been compiled you can do:
+If sources have not yet been compiled you first need to do this:
 
->>> from semcor import Semcor
->>> sc = Semcor(SOME_DIRECTORY)
->>> sc.compile()
->>> sc.load()
+>>> from semcor import compile_semcor
+>>> compile_semcor(SOME_DIRECTORY)
 
 
 """
@@ -33,13 +30,29 @@ from __future__ import print_function
 import os, sys, bs4, pickle, time
 
 import parser
-from utils import pickle_file_name
+from utils import pickle_file_name, Synset
 
 
 SEMCOR = '/Users/marc/Documents/corpora/semcor/semcor3.0'
 
 BROWN1 = os.path.join(SEMCOR, 'brown1', 'tagfiles')
 BROWN2 = os.path.join(SEMCOR, 'brown2', 'tagfiles')
+
+MAPPINGS = '../data/corelex-3.1-semcor_lemma2synset.txt'
+
+
+def load_semcor(directory, maxfiles=999):
+    """Load the semcor files in directory and return a Semcor instance. The maximum
+    number of files to load is defined by the optional second argument."""
+    sc = Semcor(directory)
+    sc.load(limit)
+    return sc
+
+
+def compile_semcor(directory, maxfiles=999):
+    """Compile maxfiles files from the given semcor directory."""
+    sc = Semcor(directory)
+    sc.compile(limit)
 
 
 class Semcor(object):
@@ -51,6 +64,7 @@ class Semcor(object):
         self.files = []
         self.lemma_idx = {}
         self.file_idx = {}
+        self.mappings = {}
         self._init_files()
 
     def __str__(self):
@@ -96,9 +110,12 @@ class Semcor(object):
         t1 = time.time()
         self.index()
         t2 = time.time()
+        self.load_mappings()
+        t3 = time.time()
         print("\nTime elapsed:")
-        print("   loading:  %4.2f seconds" % (t1 - t0))
-        print("   indexing: %4.2f seconds" % (t2 - t1))
+        print("   loading files:    %4.2f seconds" % (t1 - t0))
+        print("   indexing files:   %4.2f seconds" % (t2 - t1))
+        print("   loading mappings: %4.2f seconds" % (t3 - t2))
         print()
 
     def index(self):
@@ -112,6 +129,27 @@ class Semcor(object):
 
     def get_file(self, fname):
         return self.file_idx.get(fname)
+
+    def load_mappings(self):
+        """Load the lemma and lemma sense to synset mappings."""
+        # TODO: consider compiling these mappings using pickle
+        self.mappings = {}
+        with open(MAPPINGS) as fh:
+            content = fh.read().split(os.linesep + os.linesep)
+            for lemma_data in content:
+                lines = lemma_data.split(os.linesep)
+                lemma = lines.pop(0)
+                self.mappings[lemma] = {}
+                for i in range(0, len(lines), 6):
+                    sense = lines[i].strip()
+                    ss = Synset(lines[i:i+6])
+                    self.mappings[lemma][sense] = ss
+
+    def get_synset_for_lemma(self, lemma, sense):
+        """Get the synset associated with the lemma and the sense. An example
+        lemma-sense combination is 'walk' with '2:38:00::'. Returns None if no
+        such synset was found."""
+        return self.mappings.get(lemma, {}).get(lemma + '%' + sense)
 
 
 class SemcorFile(object):
@@ -158,14 +196,10 @@ class SemcorFile(object):
         return None
 
 
-
 if __name__ == '__main__':
 
-    semcor = Semcor(BROWN1)
-
     if len(sys.argv) > 1 and sys.argv[1] == '--compile':
-        semcor.compile(10)
-        exit()
-        
-    semcor.load(10)
-    print(semcor)
+        compile_semcor(BROWN1, 10)
+    else:
+        sc = load_semcor(BROWN1, 10)
+        print(sc)

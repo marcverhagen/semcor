@@ -42,7 +42,7 @@ TODO:
 
 from __future__ import print_function
 
-import sys, re
+import sys, re, textwrap
 
 from semcor import Semcor, SemcorFile, BROWN1, BROWN2
 from utils import read_input
@@ -87,6 +87,7 @@ class Browser(object):
         return self.semcor.lemma_idx.get(lemma, [])
         
     def show_lemma(self, lemma):
+        # deprecated, see show senses
         idx = index_lemmas(self.get_lemmas(lemma))
         for pos in idx:
             for sense in idx[pos]:
@@ -122,7 +123,25 @@ class Browser(object):
     def show_senses(self, idx, pos, tag_prefix):
         if pos.startswith(tag_prefix):
             for sense in idx[pos]:
-                print('\n', BOLD + BLUE, idx[pos][sense][0], END, '\n', sep='')
+                # each sense is a word form, the word forms all have identical
+                # senses so we use the first one to print as a header
+                first_wf = idx[pos][sense][0]
+                lemma = first_wf.lemma
+                sense_id = first_wf.lexsn
+                print('\n', BOLD + BLUE, first_wf, END, '\n', sep='')
+                synset = self.semcor.get_synset_for_lemma(lemma, sense_id)
+                if synset is not None:
+                    if len(synset.btypes) < 12:
+                        #print('  ', synset, synset.btypes)
+                        print(synset, synset.btypes)
+                    else:
+                        #print('  ', synset)
+                        print(synset)
+                    #print()
+                    for line in textwrap.wrap(synset.gloss, 80):
+                        #print('  ', line)
+                        print(line)
+                    print()
                 for wf in idx[pos][sense]:
                     wf.sent.pp(highlight=wf.position)
 
@@ -130,7 +149,7 @@ class Browser(object):
         print()
         lemmas = self.get_lemmas(lemma)
         lemma_idx = index_lemmas(lemmas)
-        print('Occurrances:', len(lemmas), '\n')
+        print('Occurrences:', len(lemmas), '\n')
         for pos in lemma_idx:
             print(pos)
             for sense in lemma_idx[pos]:
@@ -188,7 +207,7 @@ def print_help():
     print('v LEMMA  -  search for verb LEMMA')
     print('a LEMMA  -  search for adjective LEMMA')
     print('r LEMMA  -  search for adverb LEMMA')
-    print('p SENT   -  print paragraph with sentence SENT')
+    print('p SID    -  print paragraph with sentence SID')
     print()
 
 

@@ -11,3 +11,18 @@ def pickle_file_name(fname):
 
 def read_input():
     return raw_input() if sys.version_info.major == 2 else input()
+
+
+class Synset(object):
+
+    """Implements the information that we have for a synset."""
+
+    def __init__(self, lines):
+        self.ssid = lines[1].strip()
+        self.cat = lines[2].strip()
+        self.btypes = lines[3].strip()
+        self.description = lines[4].strip()
+        self.gloss = lines[5].strip()
+
+    def __str__(self):
+        return "{ %s }" % self.description

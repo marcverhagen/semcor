@@ -91,9 +91,9 @@ class WordForm(SemcorObject):
 
     Note that these word forms can have multiple tokens and those are not just
     for names, for example primary_election is a word form. Some word forms do
-    not have senses associated with them, for them we just have to POS and the
+    not have senses associated with them, for them we just have POS and the
     text."""
-    
+
     def __init__(self, para, sent, position, tag):
         self.para = para                  # instance of Paragraph
         self.sent = sent                  # instance of Sentence
