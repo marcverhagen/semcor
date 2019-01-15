@@ -33,26 +33,26 @@ import parser
 from utils import pickle_file_name, Synset
 
 
-SEMCOR = '/Users/marc/Documents/corpora/semcor/semcor3.0'
+SEMCOR = '../data/semcor3.0'
 
 BROWN1 = os.path.join(SEMCOR, 'brown1', 'tagfiles')
 BROWN2 = os.path.join(SEMCOR, 'brown2', 'tagfiles')
 
-MAPPINGS = '../data/corelex-3.1-semcor_lemma2synset.txt'
+MAPPINGS = '../data/corelex/corelex-3.1-semcor_lemma2synset.txt'
 
 
 def load_semcor(directory, maxfiles=999):
     """Load the semcor files in directory and return a Semcor instance. The maximum
     number of files to load is defined by the optional second argument."""
     sc = Semcor(directory)
-    sc.load(limit)
+    sc.load(maxfiles)
     return sc
 
 
 def compile_semcor(directory, maxfiles=999):
     """Compile maxfiles files from the given semcor directory."""
     sc = Semcor(directory)
-    sc.compile(limit)
+    sc.compile(maxfiles)
 
 
 class Semcor(object):
