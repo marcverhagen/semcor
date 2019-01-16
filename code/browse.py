@@ -6,7 +6,7 @@ Should run in both Python 2.7 and Python 3.
 
 Usage:
 
-$ python browse.py
+$ python browse.py [--files N]
 
 This assumes that sources have been compiled (see semcor.py).
 
@@ -35,7 +35,8 @@ from __future__ import print_function
 
 import sys, re, textwrap
 
-from semcor import Semcor, SemcorFile
+# SemcorFile needs to be imported for loading the pickled files
+from semcor import SemcorFile, load_semcor
 from utils import read_input
 from ansi import BLUE, BOLD, END
 
@@ -205,7 +206,9 @@ def print_help():
 if __name__ == '__main__':
 
     # this assumes that sources have been compiled
-    semcor = Semcor()
-    semcor.load(10)
+    files_to_load = 999
+    if len(sys.argv) > 2 and sys.argv[1] == '--files':
+        files_to_load = int(sys.argv[2])
+    semcor = load_semcor(files_to_load)
     Browser(semcor)
     

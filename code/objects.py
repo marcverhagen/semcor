@@ -101,6 +101,9 @@ class WordForm(SemcorObject):
         self.pid = para.pid
         self.sid = sent.sid
         self.pos = tag.get('pos')
+        self.rdf = tag.get('rdf')
+        self.group = tag.get('group')
+        self.pn = tag.get('pn')
         self.lemma = tag.get('lemma')
         self.wnsn = tag.get('wnsn')
         self.lexsn = tag.get('lexsn')
@@ -117,6 +120,18 @@ class WordForm(SemcorObject):
 
     def has_sense(self):
         return not self.wnsn is None
+
+    def kwic(self, context):
+        kw = self.sent.wfs[self.position].text
+        left = self.sent.wfs[:self.position]
+        right = self.sent.wfs[self.position+1:]
+        left = ' '.join([t.text for t in left])
+        right = ' '.join([t.text for t in right])
+        left = left[-context:]
+        right = right[:context]
+        return (left, kw, right)
+    #left = '{s: >{width}}'.format(s=left, width=context)
+    #    return "%s %s[ %s ]%s %s" % (left, BLUE, kw, END, right)
     
 
 class Punctuation(SemcorObject):

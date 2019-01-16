@@ -24,14 +24,14 @@ If sources have not yet been compiled you first need to do this:
 >>> from semcor import compile_semcor
 >>> compile_semcor()
 
-Here all files are compiled, add a numerical argument to restrict thenumber of
-files to compile.
+Here all files are compiled, you can add an integer-valued argument to restrict
+the number of files to compile.
 
 """
 
 from __future__ import print_function
 
-import os, sys, bs4, pickle, time, glob
+import os, sys, bs4, pickle, time, glob, getopt
 
 import parser
 from utils import pickle_file_name, Synset
@@ -39,8 +39,10 @@ from utils import pickle_file_name, Synset
 
 SEMCOR = '../data/semcor3.0'
 
-# The files are all the files in the brown1 and brown2 subsets of semcor (and
-# does not include brownv, which has verbs only), in lexicographic order
+# The files are all the files in the brown1 and brown2 subcorpora of semcor. The
+# brownv subcorpus, which has verbs only, is not included. Files are sorted in
+# lexicographic order with the subcorpus as part of the path so brown1/br-j03
+# will precede brown2/br-e22.
 SEMCOR_FILES = sorted(glob.glob(os.path.join(SEMCOR, 'brown[12]/tagfiles/*')))
 
 # Mappings to wordnet synsets
@@ -68,29 +70,26 @@ class Semcor(object):
     def __init__(self):
 
         self.fnames = SEMCOR_FILES
+        self.fcount = len(SEMCOR_FILES)
         self.files = []
         self.loaded = 0
         self.lemma_idx = {}
         self.file_idx = {}
         self.mappings = {}
-        self._init_files()
 
     def __str__(self):
-        return "<Semcor instances with %d files>" % self.loaded
+        return "<Semcor instance with %d files>" % self.loaded
 
-    def _init_files(self):
-        self.fnames = glob.glob(os.path.join(SEMCOR, 'brown?', 'tagfiles', '*'))
-
-    def compile(self, limit=999):
+    def compile(self, maxfiles=999):
         """Compile the files in the corpus. Compiling means reading all files,
         creating SemcorFile instances for them and saving them to disk as pickle
-        files. The limit argument limits how many files are compiled, default is
+        files. The maxfiles argument limits how many files are compiled, default is
         to compile all of them."""
         t0 = time.time()
         count = 0
         for fname in self.fnames:
             count += 1
-            if count > limit:
+            if count > maxfiles:
                 break
             print('Compiling', fname)
             semcor_file = SemcorFile(fname)
@@ -101,17 +100,17 @@ class Semcor(object):
         time_elapsed = time.time() - t0
         print("Time elapsed is %.2f seconds" % time_elapsed)
 
-    def load(self, limit=999):
+    def load(self, maxfiles=999):
         """Load all compiled files. Loading from compiled sources with Python 2
         is about 2-3 times faster then loading semcor files and parsing them, on
         Python 3 the speed up is a factor 10 bigger, although it takes a bit
         longer to compile."""
         t0 = time.time()
-        self.file = []
-        self.loaded = len(self.fnames) if limit == 999 else limit
-        for fname in self.fnames[:limit]:
+        self.files = []
+        self.loaded = self.fcount if maxfiles > self.fcount else maxfiles
+        print('Loading compiled files...')
+        for fname in self.fnames[:maxfiles]:
             pickle_file = pickle_file_name(fname)
-            print('Loading', pickle_file)
             with open(pickle_file, 'rb') as fh:
                 self.files.append(pickle.load(fh))
         t1 = time.time()
@@ -167,8 +166,11 @@ class SemcorFile(object):
         self.forms = []
 
     def __str__(self):
-        return "<SemcoreFile %s>" % os.path.basename(self.fname)
-    
+        # just print the subcorpus and the basename
+        subcorpus = self.fname.split(os.sep)[-3]
+        basename = os.path.basename(self.fname)
+        return "<SemcoreFile %s %s>" % (subcorpus, basename)
+
     def add_paragraph(self, para):
         self.paragraphs.append(para)
 
@@ -205,8 +207,12 @@ class SemcorFile(object):
 
 if __name__ == '__main__':
 
-    if len(sys.argv) > 1 and sys.argv[1] == '--compile':
-        compile_semcor(10)
+    options, args = getopt.getopt(sys.argv[1:], 'n:', ['compile'])
+    options = { name: value for (name, value) in options }
+    maxfiles = int(options.get('-n', 999))
+
+    if '--compile' in options:
+        compile_semcor(maxfiles)
     else:
-        sc = load_semcor(10)
+        sc = load_semcor(maxfiles)
         print(sc)
