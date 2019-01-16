@@ -56,6 +56,9 @@ class Sentence(SemcorObject):
         self.sid = sid          # <string>
         self.wfs = []
 
+    def __str__(self):
+        return "<Sentence %s:%s with %d wfs>" % (self.pid, self.sid, len(self.wfs))
+
     def is_sentence(self):
         return True
     
@@ -69,6 +72,9 @@ class Sentence(SemcorObject):
             if wf.is_word_form() and wf.has_sense():
                 forms.append(wf)
 
+    def as_string(self):
+        return ' '.join([t.text for t in self.wfs])
+    
     def pp(self, highlight=None):
         print("%s%s%s-%s%s: " % (GREY, GREEN, self.fname, self.sid, END), end='')
         for wf in self.wfs:
@@ -102,12 +108,12 @@ class WordForm(SemcorObject):
         self.sid = sent.sid
         self.pos = tag.get('pos')
         self.rdf = tag.get('rdf')
-        self.group = tag.get('group')
         self.pn = tag.get('pn')
         self.lemma = tag.get('lemma')
         self.wnsn = tag.get('wnsn')
         self.lexsn = tag.get('lexsn')
         self.text = tag.getText()
+        self.keys = tuple(tag.__dict__['attrs'].keys())  # for statistics
 
     def __str__(self):
         if self.wnsn is None:
@@ -130,14 +136,13 @@ class WordForm(SemcorObject):
         left = left[-context:]
         right = right[:context]
         return (left, kw, right)
-    #left = '{s: >{width}}'.format(s=left, width=context)
-    #    return "%s %s[ %s ]%s %s" % (left, BLUE, kw, END, right)
     
 
 class Punctuation(SemcorObject):
 
     def __init__(self, tag):
         self.text = tag.getText()
+        self.keys = tuple()
 
     def __str__(self):
         return "<Punctuation %s>" % self.text
