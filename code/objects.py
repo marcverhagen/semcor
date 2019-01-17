@@ -57,11 +57,11 @@ class Sentence(SemcorObject):
         self.wfs = []
 
     def __str__(self):
-        return "<Sentence %s:%s with %d wfs>" % (self.pid, self.sid, len(self.wfs))
+        return "<Sentence %s:%s with %d wfs>" % (self.fname, self.sid, len(self.wfs))
 
     def is_sentence(self):
         return True
-    
+
     def add_wf(self, wf):
         # note that a wf will either be an instance of WordForm or an instance
         # of Punctuation

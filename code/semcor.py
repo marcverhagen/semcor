@@ -69,6 +69,46 @@ def compile_semcor(maxfiles=999):
 
 class Semcor(object):
 
+    """Instance variables:
+
+    fnames : list of strings
+       all files in Semcor
+
+    fcount : integer
+       number of all files in Semcor
+
+    files : list of SemcorFile instances
+       list of SemcorFile instances loaded, where the filenames are a
+       subset of fnames
+
+    loaded : integer
+       number of files loaded, the length of the list in files
+
+    lemma_idx : dict (string -> list of WordForm instances)
+       An index of mappings from lemmas like "say" or "walk" to a list of all
+       instances of WordForm in the loaded corpus that go with the lemma. The
+       WordForms do not all need to have the same parts-of-speech and senses.
+
+    file_idx : dict (string -> SemcorFile)
+       An index from file names in semcor to instances of SemcorFile. For
+       filenames just the base names are used, so we have "br-a01" and not
+       "brown1/br-a01" or "brown1/tagfiles/br-a01. This index includes all
+       instance of SemcorFile in the files variable."
+
+    sent_idx : dict (int -> Sentence)
+       An index of sentences numbered sequentially to Sentence instances, the
+       sentence number starts at 1 and does not reset for each document, that
+       is, we have unique sentence identifiers. This list is not initialized
+       when loading Semcor, rather it is created later by request using an
+       external file with documents sorted in some order.
+
+    mappings : dict (string -> dict (string -> Synset))
+       An index with mappings to WordNet information. The keys at the top level
+       are lemmas like 'walk' and the keys on the second level are Semcor senses
+       like 'walk%1:04:01::'. Each semcor sense is mapped to one Synset.
+
+    """
+
     def __init__(self):
 
         self.fnames = SEMCOR_FILES
@@ -77,6 +117,7 @@ class Semcor(object):
         self.loaded = 0
         self.lemma_idx = {}
         self.file_idx = {}
+        self.sent_idx = {}
         self.mappings = {}
 
     def __str__(self):
@@ -134,6 +175,23 @@ class Semcor(object):
             self.file_idx[os.path.basename(semcor_file.fname)] = semcor_file
             for form in semcor_file.forms:
                 self.lemma_idx.setdefault(form.lemma,[]).append(form)
+
+    def create_sentence_index(self, fnames_file):
+        """Creates the index in sent_idx, using the list of semcor file names in
+        fnames_file. File names should be just the base name and should be put
+        in the file separate by any kind of white space, for example, one file
+        per line. Any filename that does not correspond to a loaded semcor file
+        will be ignored."""
+        self.sent_idx = {}
+        fnames = open(fnames_file).read().strip().split()
+        fnames = [fname for fname in fnames if fname in self.file_idx]
+        sentence_number = 0
+        for fname in fnames:
+            scfile = self.file_idx[fname]
+            for s in scfile.get_sentences():
+                sentence_number += 1
+                self.sent_idx[sentence_number] = s
+        print(self.mappings['walk'].keys())
 
     def get_file(self, fname):
         return self.file_idx.get(fname)
@@ -205,6 +263,12 @@ class SemcorFile(object):
                 if sentence.sid == sent:
                     return sentence
         return None
+
+    def get_sentences(self):
+        sentences = []
+        for para in self.paragraphs:
+            sentences.extend(para.sentences)
+        return sentences
 
 
 if __name__ == '__main__':
