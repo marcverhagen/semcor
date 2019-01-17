@@ -4,7 +4,7 @@ Some analysis of the wf tags in semcor.
 
 Usage:
 
-$ python3 analyze.py (--maxfiles N)
+$ python3 analyze.py MAXFILES?
 
 The optional argument determines how many files are used for analysis, the
 default is to use all files. This assumes that files have been compiled with
@@ -36,11 +36,11 @@ import sys
 from collections import Counter
 from semcor import load_semcor, SemcorFile
 from ansi import BLUE, GREY, END
+from utils import kwic_line
 
 
 def collect_data(sc, raw_attributes, attributes, attribute_index,
                  groups, weird_rdfs):
-
     
     for scfile in sc.files:
         for wf in scfile.forms:
@@ -67,6 +67,7 @@ def collect_data(sc, raw_attributes, attributes, attribute_index,
     for attr in attributes:
         attribute_index[attr]['values'] = Counter(attribute_index[attr]['values'])
 
+
 def print_attr_info(raw_attributes, attribute_index):
     # for now just printing the raw counts
     print("ATTRIBUTES\n")
@@ -88,18 +89,15 @@ def print_weird_rdfs(forms):
     lemmas = {}
     context = 50
     for wf in forms:
-        (left, kw, right) = wf.sent.wfs[wf.position].kwic(context)
+        (left, kw, right) = wf.kwic(context)
         lemmas.setdefault(wf.rdf, []).append((left, kw, right, wf.sent.as_string()))
     with open('weird-rdfs.txt', 'w') as fh:
         for lemma in sorted(lemmas):
             for (left, kw, right, sent) in lemmas[lemma]:
-                left = '{s: >{width}}'.format(s=left, width=context)
-                #right = '{s: <{width}}'.format(s=right, width=context)
-                kwic_line = "%s %s%s%s %s" % (left, BLUE, kw, END, right)
-                full_width = (2 * context) + 30
-                kwic_line = '{s: <{width}}'.format(s=kwic_line, width=full_width)
-                fh.write("%s %s%s%s\n" % (kwic_line, GREY, lemma, END))
-                #fh.write(sent + '\n')
+                width = (2 * context) + 30
+                line = kwic_line(left, kw, right, context)
+                line = '{s: <{width}}'.format(s=line, width=width)
+                fh.write("%s %s%s%s\n" % (line, GREY, lemma, END))
 
 
 if __name__ == '__main__':

@@ -1,5 +1,7 @@
 import os, sys
 
+from ansi import BLUE, END
+
 
 def pickle_file_name(fname):
     """Generate the name for the pickle file. We maintain different pickle files
@@ -11,6 +13,13 @@ def pickle_file_name(fname):
 
 def read_input():
     return raw_input() if sys.version_info.major == 2 else input()
+
+
+def kwic_line(left, kw, right, context=50):
+    left = '{s: >{width}}'.format(s=left, width=context)
+    right = '{s: <{width}}'.format(s=right, width=context)
+    kwic_line = "%s %s%s%s %s" % (left, BLUE, kw, END, right)
+    return kwic_line
 
 
 class Synset(object):

@@ -6,7 +6,7 @@ Should run in both Python 2.7 and Python 3.
 
 Usage:
 
-$ python browse.py [--files N]
+$ python browse.py [--n MAXFILES]
 
 This assumes that sources have been compiled (see semcor.py).
 
@@ -26,19 +26,21 @@ Further browser requirements
 
 TODO:
 - when loading, print warning if sources have not been compiled yet
-    - include note that python version matters
+  include note that python version matters
 - make sentences a linked list
+- for each sense only 10 word forms (selected randomly) are printed
+  perhaps add code to show more or to change the number of forms
 
 """
 
 from __future__ import print_function
 
-import sys, re, textwrap
+import sys, re, textwrap, random
 
 # SemcorFile needs to be imported for loading the pickled files
 from semcor import SemcorFile, load_semcor
-from utils import read_input
-from ansi import BLUE, BOLD, END
+from utils import read_input, kwic_line
+from ansi import BLUE, GREEN, BOLD, GREY, END
 
 
 class Browser(object):
@@ -77,7 +79,7 @@ class Browser(object):
 
     def get_lemmas(self, lemma):
         return self.semcor.lemma_idx.get(lemma, [])
-        
+
     def show_lemma(self, lemma):
         # deprecated, see show senses
         idx = index_lemmas(self.get_lemmas(lemma))
@@ -123,19 +125,17 @@ class Browser(object):
                 print('\n', BOLD + BLUE, first_wf, END, '\n', sep='')
                 synset = self.semcor.get_synset_for_lemma(lemma, sense_id)
                 if synset is not None:
-                    if len(synset.btypes) < 12:
-                        #print('  ', synset, synset.btypes)
-                        print(synset, synset.btypes)
-                    else:
-                        #print('  ', synset)
-                        print(synset)
-                    #print()
-                    for line in textwrap.wrap(synset.gloss, 80):
-                        #print('  ', line)
-                        print(line)
-                    print()
-                for wf in idx[pos][sense]:
-                    wf.sent.pp(highlight=wf.position)
+                    btypes = synset.btypes if len(synset.btypes) < 12 else ''
+                    print(synset, synset.btypes)
+                    print('\n', GREEN, synset.gloss, END, '\n', sep='')
+                wfs = idx[pos][sense]
+                random.shuffle(wfs)
+                for wf in wfs[:10]:
+                    context = 50
+                    (left, kw, right) = wf.kwic(context)
+                    sid = wf.sent.fname + '-' + wf.sid
+                    line = kwic_line(left, kw, right, context)
+                    print("%s%-10s%s %s" % (GREY, sid, END, line))
 
     def show_stats(self, lemma):
         print()
@@ -207,7 +207,7 @@ if __name__ == '__main__':
 
     # this assumes that sources have been compiled
     files_to_load = 999
-    if len(sys.argv) > 2 and sys.argv[1] == '--files':
+    if len(sys.argv) > 2 and sys.argv[1] == '-n':
         files_to_load = int(sys.argv[2])
     semcor = load_semcor(files_to_load)
     Browser(semcor)

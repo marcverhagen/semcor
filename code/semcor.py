@@ -4,12 +4,14 @@ Should run in both Python 2 and Python 3, but {Python 3 is recommended because
 it is much faster for this code.
 
 
-Usage fron command line:
+Usage from command line:
 
-$ python semcor.py --compile
-$ python semcor.py
+$ python semcor.py --compile (-n MAXFILES)
+$ python semcor.py (-n MAXFILES)
 
-The first invocation compiles semcor files, the second loads compiled files.
+The first invocation compiles semcor files, the second loads compiled files. The
+default is to compile or load all files, this can be overruled with the -n
+option.
 
 Usage as an imported module:
 
