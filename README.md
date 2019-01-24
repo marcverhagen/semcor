@@ -43,7 +43,7 @@ The code integrates Semcor with WordNet synset information and Corelex basic typ
 >>> sc = load_semcor()
 ```
 
-When compiling semcor all source files are parsed and stored a pickle files, speeding up loading significantly. The second time you load Semcor you do not have to include `compile_semcor`, however, when you upgrade to a new version you should recompile. Both functions above can take an optional argument that would limit the number of files being compiled or loaded.
+The `load_semcor()` method returns an instance of the `Semcor` class. When compiling Semcor all source files are parsed and stored a pickle files, speeding  up loading significantly. The second time you load Semcor you do not have to include `compile_semcor`, however, when you upgrade to a new version you should recompile. Both functions above can take an optional argument that would limit the number of files being compiled or loaded.
 
 **Creating a application-specific sentence index**. This allows you to use sentence offsets from the entire corpus and link to Semcor Sentence objects, which is useful when running all Semcor sentences separately through another processing component like the Stanford dependency parser.
 
@@ -53,7 +53,7 @@ When compiling semcor all source files are parsed and stored a pickle files, spe
 >>> sc.create_sentence_index("files.txt")
 ```
 
-The file `files.txt` is provided by the user and it contains an ordered list with filenames separated by some whitespace, for example, either of the following will work:
+This creates an index in the `sent_idx` attribute of the Semcor instance, see the Semcor docstring for more information. The file `files.txt` is provided by the user and it contains an ordered list with filenames separated by some whitespace, for example, either of the following will work:
 
 ```
 br-a01 br-a02 br-a11 br-a12
@@ -66,4 +66,4 @@ br-a11
 br-a12
 ```
 
-Files in the list that are not loaded into Semcor will be ignored.
+Files in the list that are not available in Semcor will be ignored.

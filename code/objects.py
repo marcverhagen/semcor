@@ -113,6 +113,7 @@ class WordForm(SemcorObject):
         self.wnsn = tag.get('wnsn')
         self.lexsn = tag.get('lexsn')
         self.text = tag.getText()
+        self.synset = None
         self.keys = tuple(tag.__dict__['attrs'].keys())  # for statistics
 
     def __str__(self):
@@ -121,11 +122,20 @@ class WordForm(SemcorObject):
         else:
             return "<wf %s %s %s %s>" % (self.pos, self.lemma, self.wnsn, self.lexsn)
 
+    def sense(self):
+        return "%s%%%s" % (self.lemma, self.lexsn) if self.has_sense() else None
+
     def is_word_form(self):
         return True
 
+    def is_nominal(self):
+        return self.pos.startswith('NN')
+
+    def is_common_noun(self):
+        return self.pos in ('NN', 'NNS')
+
     def has_sense(self):
-        return not self.wnsn is None
+        return self.wnsn is not None and self.lexsn is not None
 
     def kwic(self, context):
         kw = self.sent.wfs[self.position].text
@@ -152,3 +162,6 @@ class Punctuation(SemcorObject):
 
     def has_sense(self):
         return False
+
+    def sense(self):
+        return None

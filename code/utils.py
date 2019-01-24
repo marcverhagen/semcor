@@ -1,6 +1,11 @@
-import os, sys
+"""utils.py
 
-from ansi import BLUE, END
+A couple of random utilities.
+
+"""
+
+import os, sys
+import ansi
 
 
 def pickle_file_name(fname):
@@ -12,13 +17,14 @@ def pickle_file_name(fname):
 
 
 def read_input():
+    """Utility method that hides differences between python 2 and 3."""
     return raw_input() if sys.version_info.major == 2 else input()
 
 
 def kwic_line(left, kw, right, context=50):
     left = '{s: >{width}}'.format(s=left, width=context)
     right = '{s: <{width}}'.format(s=right, width=context)
-    kwic_line = "%s %s%s%s %s" % (left, BLUE, kw, END, right)
+    kwic_line = "%s %s%s%s %s" % (left, ansi.BLUE, kw, ansi.END, right)
     return kwic_line
 
 
@@ -35,3 +41,4 @@ class Synset(object):
 
     def __str__(self):
         return "{ %s }" % self.description
+

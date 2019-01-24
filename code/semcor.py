@@ -37,6 +37,7 @@ import os, sys, bs4, pickle, time, glob, getopt
 
 import parser
 from utils import pickle_file_name, Synset
+from index import create_lemma_index
 
 
 SEMCOR = '../data/semcor3.0'
@@ -72,10 +73,10 @@ class Semcor(object):
     """Instance variables:
 
     fnames : list of strings
-       all files in Semcor
+       all files from the brown1 and brown2 subcorpora of Semcor
 
     fcount : integer
-       number of all files in Semcor
+       number of all files in brown1 and brown2 subcorpora (length of fnames)
 
     files : list of SemcorFile instances
        list of SemcorFile instances loaded, where the filenames are a
@@ -102,10 +103,15 @@ class Semcor(object):
        when loading Semcor, rather it is created later by request using an
        external file with documents sorted in some order.
 
-    mappings : dict (string -> dict (string -> Synset))
-       An index with mappings to WordNet information. The keys at the top level
-       are lemmas like 'walk' and the keys on the second level are Semcor senses
-       like 'walk%1:04:01::'. Each semcor sense is mapped to one Synset.
+    synset_idx : dict (string -> dict (string -> Synset))
+       An index with mappings to WordNet and Corelex information. The keys are
+       lemmas like 'walk' at the top level of the index and Semcor senses like
+       'walk%1:04:01::' in the embedded dictionaries, and each semcor sense is
+       mapped to one Synset which contains the Wordnet information amended with
+       Corelex basic types. The reason that we have both levels is that we want
+       to be able to get all senses and synsets for a lemma. The Semcor sense is
+       a concatenation of the lemma, the percentage sign and the lexical sense.
+       The content for this index is read from the MAPPINGS file.
 
     """
 
@@ -118,7 +124,7 @@ class Semcor(object):
         self.lemma_idx = {}
         self.file_idx = {}
         self.sent_idx = {}
-        self.mappings = {}
+        self.synset_idx = {}
 
     def __str__(self):
         return "<Semcor instance with %d files>" % self.loaded
@@ -191,39 +197,87 @@ class Semcor(object):
             for s in scfile.get_sentences():
                 sentence_number += 1
                 self.sent_idx[sentence_number] = s
-        print(self.mappings['walk'].keys())
 
     def get_file(self, fname):
         return self.file_idx.get(fname)
 
     def load_mappings(self):
-        """Load the lemma and lemma sense to synset mappings."""
+        """Load the mappings from lemmas and senses to synsets."""
         # TODO: consider compiling these mappings using pickle
-        self.mappings = {}
+        self.synset_idx = {}
         with open(MAPPINGS) as fh:
             content = fh.read().split(os.linesep + os.linesep)
             for lemma_data in content:
                 lines = lemma_data.split(os.linesep)
                 lemma = lines.pop(0)
-                self.mappings[lemma] = {}
+                self.synset_idx[lemma] = {}
                 for i in range(0, len(lines), 6):
                     sense = lines[i].strip()
                     ss = Synset(lines[i:i+6])
-                    self.mappings[lemma][sense] = ss
+                    self.synset_idx[lemma][sense] = ss
+        self._add_synsets_to_wordforms()
+
+    def _add_synsets_to_wordforms(self):
+        for lemma in self.lemma_idx:
+            for wf in self.lemma_idx[lemma]:
+                wf.synset = self.get_synset_for_lemma(lemma, wf.lexsn)
 
     def get_synset_for_lemma(self, lemma, sense):
         """Get the synset associated with the lemma and the sense. An example
         lemma-sense combination is 'walk' with '2:38:00::'. Returns None if no
         such synset was found."""
-        return self.mappings.get(lemma, {}).get(lemma + '%' + sense)
+        return self.synset_idx.get(lemma, {}).get(lemma + '%' + sense)
+
+    def get_senses(self):
+        senses = set()
+        for scfile in self.files:
+            for sent in scfile.get_sentences():
+                for wf in sent.wfs:
+                    if wf.has_sense():
+                        senses.add("%s%%%s" % (wf.lemma, wf.lexsn))
+        return senses
+
+    def get_common_nouns(self):
+        answer = []
+        for scfile in self.files:
+            answer.extend(scfile.get_common_nouns())
+        return answer
+
+    def get_common_noun_index(self):
+        idx = {}
+        for scfile in self.files:
+            nouns = scfile.get_common_nouns()
+            sub_idx = create_lemma_index(nouns)
+            idx[scfile.fname] = sub_idx
+        return idx
 
 
 class SemcorFile(object):
+
+    """Class that stores all information from Semcor files.
+
+    Instance variables:
+
+    fname : string
+       The name of the file, this is the full path starting from the code
+       directory
+
+    paragraphs : list of Paragraphs
+
+    forms : list of WordForms
+       All the WordForms in the document that have a sense.
+
+    lemma_idx : dict { string -> list of WordForms }
+       Dictionary indexed on lemmas where the value is a list of WordForms that
+       are associated with the lemma.
+
+    """
 
     def __init__(self, fname):
         self.fname = fname
         self.paragraphs = []
         self.forms = []
+        self.lemma_idx = {}
 
     def __str__(self):
         # just print the subcorpus and the basename
@@ -257,7 +311,9 @@ class SemcorFile(object):
         with open(pickle_file, 'wb') as fh:
             pickle.dump(self, fh)
 
-    def get_sentence(self, sent):
+    def get_sentence(self, sent_id):
+        """Return the sentence with sid equal to sent_id or return None if no such
+        sentence exists."""
         for par in self.paragraphs:
             for sentence in par.sentences:
                 if sentence.sid == sent:
@@ -265,10 +321,19 @@ class SemcorFile(object):
         return None
 
     def get_sentences(self):
+        """Return a list of all sentences in the document."""
         sentences = []
         for para in self.paragraphs:
             sentences.extend(para.sentences)
         return sentences
+
+    def get_nominals(self):
+        """Return a list of all nominals in the document."""
+        return [wf for wf in self.forms if wf.is_nominal()]
+
+    def get_common_nouns(self):
+        """Return the list of all common nouns in the document."""
+        return [wf for wf in self.forms if wf.is_common_noun()]
 
 
 if __name__ == '__main__':

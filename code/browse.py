@@ -12,11 +12,11 @@ This assumes that sources have been compiled (see semcor.py).
 
 Current functionality:
 - printing statistics for a lemma (all senses)
-- searching for a lemma
+- searching for a lemma and display results
+- include synset identifiers (new style, with lemmas) and glosses
 - display a paragraph that contains a given sentence
 
 Further browser requirements
-- give synset identifiers (new style, with lemmas) and definitions
 - give me the documents/sentences where those two senses co-occur
 - search for a synset
 - search for occurrences of pairs of basic types
@@ -122,8 +122,8 @@ class Browser(object):
                 first_wf = idx[pos][sense][0]
                 lemma = first_wf.lemma
                 sense_id = first_wf.lexsn
+                synset = first_wf.synset
                 print('\n', BOLD + BLUE, first_wf, END, '\n', sep='')
-                synset = self.semcor.get_synset_for_lemma(lemma, sense_id)
                 if synset is not None:
                     btypes = synset.btypes if len(synset.btypes) < 12 else ''
                     print(synset, synset.btypes)
