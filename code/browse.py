@@ -38,7 +38,7 @@ from __future__ import print_function
 import sys, re, textwrap, random
 
 # SemcorFile needs to be imported for loading the pickled files
-from semcor import SemcorFile, load_semcor
+from semcor import Semcor, SemcorFile
 from utils import read_input, kwic_line
 from ansi import BLUE, GREEN, BOLD, GREY, END
 
@@ -209,6 +209,6 @@ if __name__ == '__main__':
     files_to_load = 999
     if len(sys.argv) > 2 and sys.argv[1] == '-n':
         files_to_load = int(sys.argv[2])
-    semcor = load_semcor(files_to_load)
+    semcor = Semcor(files_to_load)
     Browser(semcor)
     

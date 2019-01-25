@@ -4,7 +4,7 @@ A couple of random utilities.
 
 """
 
-import os, sys
+import os, sys, time
 import ansi
 
 
@@ -26,6 +26,16 @@ def kwic_line(left, kw, right, context=50):
     right = '{s: <{width}}'.format(s=right, width=context)
     kwic_line = "%s %s%s%s %s" % (left, ansi.BLUE, kw, ansi.END, right)
     return kwic_line
+
+
+def keep_time(func):
+    """Decorator function to print time elapsed."""
+    def wrapper(*args, **kwargs):
+        t0 = time.time()
+        func(*args, **kwargs)
+        time_elapsed = time.time() - t0
+        print("Time elapsed is %.2f seconds" % time_elapsed)
+    return wrapper
 
 
 class Synset(object):
