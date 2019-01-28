@@ -125,9 +125,11 @@ class Semcor(object):
 
     """
 
-    # TODO: that noun_idx is a bit weird since it has the weird restriction. How
-    # am I going to name all those other indexes with different data? Maybe have
-    # one index but create seperate views on it (then again, how do I name the
+    # TODO: that noun_idx is a bit weird since it has the weird restriction of
+    # not including a ordform if it does no co-occur with another wordform in
+    # the same document with the same lemma and a different sense. How am I
+    # going to name all those other indexes with different data? Maybe have one
+    # index but create seperate views on it (then again, how do I name the
     # views). Or maybe have one index and accessor methods do the filtering (and
     # yes, they could cache results). Will not worry about this till I have more
     # indexes of type IndexedWordForms.
@@ -327,7 +329,7 @@ class SemcorFile(object):
         sentence exists."""
         for par in self.paragraphs:
             for sentence in par.sentences:
-                if sentence.sid == sent:
+                if sentence.sid == sent_id:
                     return sentence
         return None
 

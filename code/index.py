@@ -56,6 +56,13 @@ class IndexedWordForms(object):
     def initialize_btypes_index(self):
         self.btypes_idx = BTypePairDictionary(self)
 
+    def get_pairs(self, min_lemmas=1, min_instances=1):
+        pairs = self.btypes_idx.keys()
+        pairs = [pair for pair in pairs
+                 if len(self.btypes_idx[pair]['ALL']) >= min_instances
+                 and len(self.btypes_idx[pair]['LEMMAS']) >= min_lemmas]
+        return pairs
+
     def print_lemma_fname_index(self):
         for lemma in sorted(self.lemma_fname_idx):
             fname_idx = self.lemma_fname_idx[lemma]
@@ -90,6 +97,12 @@ class BTypePairDictionary(object):
 
     def __getitem__(self, key):
         return self.data[key]
+
+    def __iter__(self):
+        return self.data.__iter__()
+
+    def keys(self):
+        return self.data.keys()
 
     def add_wordforms(self, lemma, btype_pair, wfs):
         self.data.setdefault(btype_pair, { 'ALL': [], 'LEMMAS': {} })

@@ -73,6 +73,14 @@ class Browser(object):
                 self.show_adverb(get_lemma(user_input))
             elif user_input.startswith('p '):
                 self.show_paragraph(get_sentence(user_input))
+            elif user_input == 'bt':
+                self.show_basic_types()
+            elif user_input.startswith('bt '):
+                self.show_basic_type(user_input[2:].strip())
+            elif user_input == 'btp':
+                self.show_basic_type_pairs()
+            elif user_input.startswith('btp '):
+                self.show_basic_type_pair(user_input[3:].strip())
             else:
                 print('\nUnknown command, available commands:')
                 print_help()
@@ -167,6 +175,53 @@ class Browser(object):
             paragraph = sentence.para.pp()
             print()
 
+    def show_basic_types(self):
+        btypes = self._get_btypes()
+        for bt in sorted(btypes):
+            print("%s  %2d pairs" % (bt, len(btypes[bt])))
+
+    def show_basic_type(self, bt):
+        btypes = self._get_btypes()
+        pairs = sorted(btypes.get(bt, []))
+        for pair in pairs:
+            print("%s-%s  %3d instances %2d lemmas" %
+                  (pair[0], pair[1],
+                   len(self.semcor.noun_idx.btypes_idx[pair]['ALL']),
+                   len(self.semcor.noun_idx.btypes_idx[pair]['LEMMAS'])))
+
+    def _get_btypes(self):
+        btypes = {}
+        for bt1, bt2 in self.semcor.noun_idx.btypes_idx.keys():
+            btypes.setdefault(bt1, []).append((bt1, bt2))
+            btypes.setdefault(bt2, []).append((bt1, bt2))
+        return btypes
+
+    def show_basic_type_pairs(self):
+        pairs = self.semcor.noun_idx.get_pairs(min_lemmas=2, min_instances=4)
+        for pair in pairs:
+            print("%s-%s (%d wordforms)" %
+                  (pair[0], pair[1],
+                   len(self.semcor.noun_idx.btypes_idx[pair]['ALL'])))
+
+    def show_basic_type_pair(self, pair):
+        print()
+        print(pair)
+        pair = tuple(pair.split('-')[:2])
+        wfs_idx = self.semcor.noun_idx.btypes_idx.data.get(pair)
+        if wfs_idx is None:
+            print("No results for %s-%s\n" % (pair[0], pair[1]))
+            return
+        for lemma in wfs_idx['LEMMAS'].keys():
+            wfs = wfs_idx['LEMMAS'][lemma]
+            wfs.sort(key=lambda x: x.synset.btypes)
+            for wf in wfs:
+                context = 40
+                (left, kw, right) = wf.kwic(context)
+                sid = wf.sent.fname + '-' + wf.sid
+                bt = wf.synset.btypes
+                line = kwic_line(left, kw, right, context)
+                print("%s%s%s %s%-10s%s %s" % (GREEN, bt, END, GREY, sid, END, line))
+            print()
 
 def index_lemmas(lemmas):
     lemma_idx = {}
@@ -193,13 +248,17 @@ def get_sentence(user_input):
 
 def print_help():
     print()
-    print('h        -  help')
-    print('s LEMMA  -  show statistics for LEMMA')
-    print('n LEMMA  -  search for noun LEMMA')
-    print('v LEMMA  -  search for verb LEMMA')
-    print('a LEMMA  -  search for adjective LEMMA')
-    print('r LEMMA  -  search for adverb LEMMA')
-    print('p SID    -  print paragraph with sentence SID')
+    print('h          -  help')
+    print('s LEMMA    -  show statistics for LEMMA')
+    print('n LEMMA    -  search for noun LEMMA')
+    print('v LEMMA    -  search for verb LEMMA')
+    print('a LEMMA    -  search for adjective LEMMA')
+    print('r LEMMA    -  search for adverb LEMMA')
+    print('p SID      -  print paragraph with sentence SID')
+    print('bt         -  show list of basic types that occur in potentially interesting pairs')
+    print('bt NAME    -  show potentially interesting pairs for the basic type')
+    print('btp        -  show list of potentially interesting basic type pairs')
+    print('btp T1-T2  -  show examples for basic type pair')
     print()
 
 
