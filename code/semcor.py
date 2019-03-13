@@ -245,7 +245,7 @@ class Semcor(object):
         senses = set()
         for scfile in self.files:
             for sent in scfile.get_sentences():
-                for wf in sent.wfs:
+                for wf in sent.elements:
                     if wf.has_sense():
                         senses.add("%s%%%s" % (wf.lemma, wf.lexsn))
         return senses

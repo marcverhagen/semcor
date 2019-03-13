@@ -54,10 +54,10 @@ class Sentence(SemcorObject):
         self.para = para
         self.pid = para.pid     # <string>
         self.sid = sid          # <string>
-        self.wfs = []
+        self.elements = []
 
     def __str__(self):
-        return "<Sentence %s:%s with %d wfs>" % (self.fname, self.sid, len(self.wfs))
+        return "<Sentence %s:%s with %d wfs>" % (self.fname, self.sid, len(self.elements))
 
     def is_sentence(self):
         return True
@@ -66,26 +66,26 @@ class Sentence(SemcorObject):
         """Returns the WordForm or the Punctuation instance at position n of the list of
         elements in the sentence, returns None if there is no such index."""
         try:
-            return self.wfs[n]
+            return self.elements[n]
         except IndexError:
             return None
 
-    def add_wf(self, wf):
-        # note that a wf will either be an instance of WordForm or an instance
-        # of Punctuation
-        self.wfs.append(wf)
+    def add_element(self, element):
+        # note that an element will either be an instance of WordForm or an
+        # instance of Punctuation
+        self.elements.append(element)
 
     def collect_forms(self, forms):
-        for wf in self.wfs:
+        for wf in self.elements:
             if wf.is_word_form() and wf.has_sense():
                 forms.append(wf)
 
     def as_string(self):
-        return ' '.join([t.text for t in self.wfs])
+        return ' '.join([t.text for t in self.elements])
     
     def pp(self, highlight=None):
         print("%s%s%s-%s%s: " % (GREY, GREEN, self.fname, self.sid, END), end='')
-        for wf in self.wfs:
+        for wf in self.elements:
             if wf.is_word_form() and highlight == wf.position:
                 print(BOLD + BLUE + wf.text + END, end=' ')
             #elif wf.has_sense():
@@ -146,9 +146,9 @@ class WordForm(SemcorObject):
         return self.wnsn is not None and self.lexsn is not None
 
     def kwic(self, context):
-        kw = self.sent.wfs[self.position].text
-        left = self.sent.wfs[:self.position]
-        right = self.sent.wfs[self.position+1:]
+        kw = self.sent.elements[self.position].text
+        left = self.sent.elements[:self.position]
+        right = self.sent.elements[self.position+1:]
         left = ' '.join([t.text for t in left])
         right = ' '.join([t.text for t in right])
         left = left[-context:]

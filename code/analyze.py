@@ -34,7 +34,7 @@ TODO:
 
 import sys
 from collections import Counter
-from semcor import load_semcor, SemcorFile
+from semcor import Semcor, SemcorFile
 from ansi import BLUE, GREY, END
 from utils import kwic_line
 
@@ -104,7 +104,7 @@ if __name__ == '__main__':
 
     maxfiles = int(sys.argv[1]) if len(sys.argv) > 1 else 999
 
-    sc = load_semcor(maxfiles)
+    sc = Semcor(maxfiles)
 
     # basic statistics on all attributes
     raw_attributes = { 'list': [], 'dict': None }

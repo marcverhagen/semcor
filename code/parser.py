@@ -27,11 +27,11 @@ def parse_sentence(semcor_file, paragraph, s):
     for dtr in s.children:
         if dtr.name == 'wf':
             wf = WordForm(paragraph, sentence, position, dtr)
-            sentence.add_wf(wf)
+            sentence.add_element(wf)
             position += 1
         elif dtr.name == 'punc':
             punct = Punctuation(dtr)
-            sentence.add_wf(punct)
+            sentence.add_element(punct)
             position += 1
         elif dtr.name is None:
             pass
