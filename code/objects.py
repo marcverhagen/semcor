@@ -62,6 +62,14 @@ class Sentence(SemcorObject):
     def is_sentence(self):
         return True
 
+    def get_element(self, n):
+        """Returns the WordForm or the Punctuation instance at position n of the list of
+        elements in the sentence, returns None if there is no such index."""
+        try:
+            return self.wfs[n]
+        except IndexError:
+            return None
+
     def add_wf(self, wf):
         # note that a wf will either be an instance of WordForm or an instance
         # of Punctuation
