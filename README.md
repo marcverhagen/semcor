@@ -20,12 +20,30 @@ This code was not tested on Windows. One expected problem is that the browser an
 
 To run the browser you first need to compile the semcor files and then you can start the browser:
 
-```
+```bash
 $ python semcor.py --compile [-n MAXFILES]
 $ python browse.py [-n MAXFILES]
 ```
 
-The compile step only needs to be run once, but you may need to redo it every time you upgrade to a new version of the code. The optional `-n` flag allows you to compile or load only MAXFILES files, the default is to load/compile all files.
+The compile step only needs to be run once, but you may need to redo it every time you upgrade to a new version of the code. The optional `-n` flag allows you to compile or load only MAXFILES files, the default is to load/compile all files. After the above you will get the browser prompt, you can type `h` to get a listing of commands:
+
+```
+*> h
+
+h          -  help
+s LEMMA    -  show statistics for LEMMA
+n LEMMA    -  search for noun LEMMA
+v LEMMA    -  search for verb LEMMA
+a LEMMA    -  search for adjective LEMMA
+r LEMMA    -  search for adverb LEMMA
+p SID      -  print paragraph with sentence SID
+bt         -  show list of basic types that occur in potentially interesting pairs
+bt NAME    -  show potentially interesting pairs for the basic type
+btp        -  show list of potentially interesting basic type pairs
+btp T1-T2  -  show examples for basic type pair
+
+*>
+```
 
 
 ### Interface
@@ -38,18 +56,18 @@ The code integrates Semcor with WordNet synset information and Corelex basic typ
 **Loading Semcor**. Everything starts with loading Semcor, as noted above, the first time you do this you also need to compile Semcor:
 
 ```Python
->>> from semcor import compile_semcor, load_semcor
+>>> from semcor import compile_semcor, Semcor, SemcorFile
 >>> compile_semcor()
->>> sc = load_semcor()
+>>> sc = Semcor()
 ```
 
-The `load_semcor()` method returns an instance of the `Semcor` class. When compiling Semcor all source files are parsed and stored a pickle files, speeding  up loading significantly. The second time you load Semcor you do not have to include `compile_semcor`, however, when you upgrade to a new version you should recompile. Both functions above can take an optional argument that would limit the number of files being compiled or loaded.
+When compiling Semcor all source files are parsed and stored a pickle files, speeding  up loading significantly. The second time you load Semcor you do not have to include `compile_semcor`, however, when you upgrade to a new version you should recompile. Both functions above can take an optional argument that would limit the number of files being compiled or loaded.
 
 **Creating a application-specific sentence index**. This allows you to use sentence offsets from the entire corpus and link to Semcor Sentence objects, which is useful when running all Semcor sentences separately through another processing component like the Stanford dependency parser.
 
 ```Python
->>> from semcor import load_semcor
->>> sc = load_semcor()
+>>> from semcor import Semcor, SemcorFile
+>>> sc = Semcor()
 >>> sc.create_sentence_index("files.txt")
 ```
 

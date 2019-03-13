@@ -153,8 +153,13 @@ class Browser(object):
         for pos in lemma_idx:
             print(pos)
             for sense in lemma_idx[pos]:
-                print("   wnsn=%s lexsn=s%s  -- %s occurrences" % \
-                          (sense[0], sense[1], len(lemma_idx[pos][sense])))
+                lexsn = "{ lexsn=%s }" % sense[1]
+                synset = lemma_idx[pos][sense][0].synset
+                occurrences = len(lemma_idx[pos][sense])
+                print_string = lexsn
+                if synset is not None:
+                    print_string = "%s %s" % (lexsn, synset)
+                print("  %3d  %s" % (occurrences, print_string))
         print()
 
     def show_paragraph(self, sentence):

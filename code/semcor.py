@@ -1,6 +1,6 @@
 """Interface to Semcor.
 
-Should run in both Python 2 and Python 3, but {Python 3 is recommended because
+Should run in both Python 2 and Python 3, but Python 3 is recommended because
 it is much faster for this code.
 
 
@@ -10,12 +10,12 @@ $ python semcor.py --compile (-n MAXFILES)
 $ python semcor.py (-n MAXFILES)
 
 The first invocation compiles semcor files, the second loads compiled files. The
-default is to compile or load all files, this can be overruled with the -n
+default is to compile or load all files, this default can be overruled with the -n
 option.
 
 Usage as an imported module:
 
->>> from semcor import Semcor
+>>> from semcor import Semcor, SemcorFile
 >>> sc = Semcor(10)
 
 The argument sets a limit to the number of files to load, without it all files
