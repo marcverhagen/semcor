@@ -48,9 +48,9 @@ btp T1-T2  -  show examples for basic type pair
 
 ### Interface
 
-The code in `semcor.py` is intended to be a general interface to Semcor. The only other Python interfaces that I am aware of are the [NLTK SemcorCorpusReader class](https://www.nltk.org/_modules/nltk/corpus/reader/semcor.html) and [pysemcor](https://github.com/letuananh/pysemcor), which were not sufficient for our purposes.
+The code in `semcor.py` is a general interface to Semcor. The only other Python interfaces that I am aware of are the [NLTK SemcorCorpusReader class](https://www.nltk.org/_modules/nltk/corpus/reader/semcor.html) and [pysemcor](https://github.com/letuananh/pysemcor), which were not sufficient for our purposes.
 
-The code integrates Semcor with WordNet synset information and Corelex basic types, but it does so by importing a data file with the information needed, this datafile is created by code in another repository (https://github.com/marcverhagen/corelex)and is included in this repository.
+The code integrates Semcor with WordNet synset information and Corelex basic types, but it does so by importing a data file with the information needed, this datafile is created by code in another repository (https://github.com/marcverhagen/corelex), but for convenience it is included in this repository.
 
 
 **Loading Semcor**. Everything starts with loading Semcor, as noted above, the first time you do this you also need to compile Semcor:
@@ -61,7 +61,7 @@ The code integrates Semcor with WordNet synset information and Corelex basic typ
 >>> sc = Semcor()
 ```
 
-When compiling Semcor all source files are parsed and stored a pickle files, speeding  up loading significantly. The second time you load Semcor you do not have to include `compile_semcor`, however, when you upgrade to a new version you should recompile. Both functions above can take an optional argument that would limit the number of files being compiled or loaded.
+Note that the second line above is code that is executed when you run semcor.py from the command line with the --compile flag and that therefore you do not need to do this if you have used the browser before. When compiling Semcor all source files are parsed and stored a pickle files, speeding  up loading significantly. The second time you load Semcor you do not have to include `compile_semcor`, however, when you upgrade to a new version you should recompile. Both functions above can take an optional argument that would limit the number of files being compiled or loaded.
 
 **Creating a application-specific sentence index**. This allows you to use sentence offsets from the entire corpus and link to Semcor Sentence objects, which is useful when running all Semcor sentences separately through another processing component like the Stanford dependency parser.
 
