@@ -4,7 +4,7 @@ Should run in both Python 2 and Python 3, but Python 3 is recommended because
 it is much faster for this code.
 
 
-Usage from command line:
+Basic usage from command line:
 
 $ python semcor.py --compile (-n MAXFILES)
 $ python semcor.py (-n MAXFILES)
@@ -13,7 +13,7 @@ The first invocation compiles semcor files, the second loads compiled files. The
 default is to compile or load all files, this default can be overruled with the -n
 option.
 
-Usage as an imported module:
+Basic usage as an imported module:
 
 >>> from semcor import Semcor, SemcorFile
 >>> sc = Semcor(10)
@@ -28,6 +28,14 @@ If sources have not yet been compiled you first need to do this:
 
 Here all files are compiled, you can add an integer-valued argument to restrict
 the number of files to compile.
+
+
+Other uses:
+
+$ python semcor.py --export-nouns FILENAME
+
+Exports all nouns, with their synset and basic types to FILENAME. This uses the
+Semcor.export_nouns() method.
 
 """
 
@@ -264,6 +272,19 @@ class Semcor(object):
             idx[scfile.fname] = sub_idx
         return idx
 
+    def export_nouns(self, fname):
+        """Export all nouns with their synset identifier and basic types to fname."""
+        fh = open(fname, 'w')
+        for file in sc.files:
+            for form in file.forms:
+                if form.pos != 'NN':
+                    continue
+                synset = form.synset
+                if synset is None:
+                    fh.write("%s\tNone\tNone\n" % form.lemma)
+                else:
+                    fh.write("%s\t%s\t%s\n" % (form.lemma, synset.ssid, synset.btypes))
+
 
 class SemcorFile(object):
 
@@ -351,7 +372,7 @@ class SemcorFile(object):
 
 if __name__ == '__main__':
 
-    options, args = getopt.getopt(sys.argv[1:], 'n:', ['compile'])
+    options, args = getopt.getopt(sys.argv[1:], 'n:', ['compile', 'export-nouns='])
     options = { name: value for (name, value) in options }
     maxfiles = int(options.get('-n', 999))
 
@@ -359,4 +380,7 @@ if __name__ == '__main__':
         compile_semcor(maxfiles)
     else:
         sc = Semcor(maxfiles)
-        print(sc)
+        if '--export-nouns' in options:
+            sc.export_nouns(options.get('--export-nouns'))
+        else:
+            print(sc)
