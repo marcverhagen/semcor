@@ -34,8 +34,7 @@ Other uses:
 
 $ python semcor.py --export-nouns FILENAME
 
-Exports all nouns, with their synset and basic types to FILENAME. This uses the
-Semcor.export_nouns() method.
+Exports all nouns with their synset and basic types to FILENAME.
 
 """
 
