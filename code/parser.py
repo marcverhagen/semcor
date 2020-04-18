@@ -4,8 +4,7 @@ from objects import Paragraph, Sentence, WordForm, Punctuation
 
 
 def parse(semcor_file):
-    library = 'lxml' if sys.version_info.major == 2 else 'html5lib'
-    soup = bs4.BeautifulSoup(open(semcor_file.fname), library)
+    soup = bs4.BeautifulSoup(open(semcor_file.fname), 'html5lib')
     for p in soup.findAll('p'):
         parse_paragraph(semcor_file, p)
     return semcor_file

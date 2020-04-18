@@ -1,19 +1,17 @@
 """Interface to Semcor.
 
-Should run in both Python 2 and Python 3, but Python 3 is recommended because
-it is much faster for this code.
+== Basic usage from command line:
 
+$ python3 semcor.py --compile (-n MAXFILES)
 
-Basic usage from command line:
+Compile semcor files, needed as a preparation step for loading semcor
+files. Compile at most MAXFILES, the default is to compile all files.
 
-$ python semcor.py --compile (-n MAXFILES)
-$ python semcor.py (-n MAXFILES)
+$ python semcor.py --export-nouns FILENAME
 
-The first invocation compiles semcor files, the second loads compiled files. The
-default is to compile or load all files, this default can be overruled with the -n
-option.
+Exports all nouns with their synset and basic types to FILENAME.
 
-Basic usage as an imported module:
+== Basic usage as an imported module:
 
 >>> from semcor import Semcor, SemcorFile
 >>> sc = Semcor(10)
@@ -26,19 +24,10 @@ If sources have not yet been compiled you first need to do this:
 >>> from semcor import compile_semcor
 >>> compile_semcor()
 
-Here all files are compiled, you can add an integer-valued argument to restrict
-the number of files to compile.
-
-
-Other uses:
-
-$ python semcor.py --export-nouns FILENAME
-
-Exports all nouns with their synset and basic types to FILENAME.
+All files are compiled, you can add an integer-valued argument to restrict the
+number of files to compile.
 
 """
-
-from __future__ import print_function
 
 import os, sys, bs4, pickle, time, glob, getopt
 
@@ -63,10 +52,7 @@ MAPPINGS = '../data/corelex/corelex-3.1-semcor_lemma2synset.txt'
 def compile_semcor(maxfiles=999):
     """Compile semcor files, default is to compile all files but maxfiles can be
     used to restrict the number. Compiling a file means reading it, creating a
-    SemcorFile instance for it and saving it to disk as a pickle file. Loading
-    from compiled sources with Python 2 is about 2-3 times faster then loading
-    and parsing semcor source files, on Python 3 the speed up is a factor 10
-    larger, although it takes a bit longer to compile."""
+    SemcorFile instance for it and saving the instance to disk as a pickle file."""
     count = 0
     for fname in SEMCOR_FILES:
         count += 1
@@ -106,7 +92,7 @@ class Semcor(object):
        An index from file names in semcor to instances of SemcorFile. For
        filenames just the base names are used, so we have "br-a01" and not
        "brown1/br-a01" or "brown1/tagfiles/br-a01. This index includes all
-       instance of SemcorFile in the files variable."
+       instances of SemcorFile in the files variable."
 
     sent_idx : dict (int -> Sentence)
        An index of sentences numbered sequentially to Sentence instances, the
@@ -132,14 +118,14 @@ class Semcor(object):
 
     """
 
-    # TODO: that noun_idx is a bit weird since it has the weird restriction of
-    # not including a ordform if it does no co-occur with another wordform in
-    # the same document with the same lemma and a different sense. How am I
-    # going to name all those other indexes with different data? Maybe have one
-    # index but create seperate views on it (then again, how do I name the
-    # views). Or maybe have one index and accessor methods do the filtering (and
-    # yes, they could cache results). Will not worry about this till I have more
-    # indexes of type IndexedWordForms.
+    # TODO: noun_idx is a bit weird since it has the odd restriction of not
+    # including a wordform if it does not co-occur with another wordform in the
+    # same document with the same lemma and a different sense. How am I going to
+    # name all those other indexes with different data? Maybe have one index but
+    # create seperate views on it (then again, how do I name the views). Or
+    # maybe have one index and accessor methods do the filtering (and yes, they
+    # could cache results). Will not worry about this till I have more indexes
+    # of type IndexedWordForms.
 
     def __init__(self, maxfiles=999):
         """Initialize attributes, load the semcor files and perform other loads and
@@ -147,6 +133,7 @@ class Semcor(object):
         optional argument, the default is to load all files."""
         self._initialize_attributes()
         self._load(maxfiles)
+        self._load_mappings()
         self._load_common_nouns_indexed_on_basic_types()
 
     def _initialize_attributes(self):
@@ -160,10 +147,10 @@ class Semcor(object):
         self.synset_idx = {}
         self.noun_idx = None
 
+    @keep_time
     def _load(self, maxfiles=999):
         """Load the compiled semcor files, but no more than specified by
         maxfiles. The default is to load all files."""
-        t0 = time.time()
         self.files = []
         self.loaded = self.fcount if maxfiles > self.fcount else maxfiles
         print('Loading compiled files...')
@@ -171,16 +158,7 @@ class Semcor(object):
             pickle_file = pickle_file_name(fname)
             with open(pickle_file, 'rb') as fh:
                 self.files.append(pickle.load(fh))
-        t1 = time.time()
         self._index()
-        t2 = time.time()
-        self._load_mappings()
-        t3 = time.time()
-        print("\nTime elapsed:")
-        print("   loading files:    %4.2f seconds" % (t1 - t0))
-        print("   indexing files:   %4.2f seconds" % (t2 - t1))
-        print("   loading mappings: %4.2f seconds" % (t3 - t2))
-        print()
 
     def _load_common_nouns_indexed_on_basic_types(self):
         wfs = self.get_common_nouns()
@@ -223,6 +201,17 @@ class Semcor(object):
     def __str__(self):
         return "<Semcor instance with %d files>" % self.loaded
 
+    def get_lemmas(self, lemma):
+        """Get all word forms in the corpus for the given lemma."""
+        return self.lemma_idx.get(lemma, [])
+
+    def get_btypes(self):
+        btypes = {}
+        for bt1, bt2 in self.noun_idx.btypes_idx.keys():
+            btypes.setdefault(bt1, []).append((bt1, bt2))
+            btypes.setdefault(bt2, []).append((bt1, bt2))
+        return btypes
+
     def create_sentence_index(self, fnames_file):
         """Creates the index in sent_idx, using the list of semcor file names in
         fnames_file. File names should be just the base name and should be put
@@ -248,7 +237,7 @@ class Semcor(object):
         such synset was found."""
         return self.synset_idx.get(lemma, {}).get(lemma + '%' + sense)
 
-    def get_senses(self):
+    def get_all_senses(self):
         senses = set()
         for scfile in self.files:
             for sent in scfile.get_sentences():
@@ -337,7 +326,7 @@ class SemcorFile(object):
         self.lemma_idx = {}
         for form in self.forms:
             self.lemma_idx.setdefault(form.lemma,[]).append(form)
-    
+
     def pickle(self):
         """Pickle the file and save it in data/compiled."""
         pickle_file = pickle_file_name(self.fname)
@@ -371,7 +360,7 @@ class SemcorFile(object):
 
 if __name__ == '__main__':
 
-    options, args = getopt.getopt(sys.argv[1:], 'n:', ['compile', 'export-nouns='])
+    options, _ = getopt.getopt(sys.argv[1:], 'n:', ['compile', 'export-nouns='])
     options = { name: value for (name, value) in options }
     maxfiles = int(options.get('-n', 999))
 

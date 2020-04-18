@@ -2,11 +2,9 @@
 
 Code to browse Semcor.
 
-Should run in both Python 2.7 and Python 3.
-
 Usage:
 
-$ python browse.py [--n MAXFILES]
+$ python3 browse.py [--n MAXFILES]
 
 This assumes that sources have been compiled (see semcor.py).
 
@@ -26,14 +24,11 @@ Further browser requirements
 
 TODO:
 - when loading, print warning if sources have not been compiled yet
-  include note that python version matters
 - make sentences a linked list
 - for each sense only 10 word forms (selected randomly) are printed
   perhaps add code to show more or to change the number of forms
 
 """
-
-from __future__ import print_function
 
 import sys, re, textwrap, random
 
@@ -86,17 +81,7 @@ class Browser(object):
                 print_help()
 
     def get_lemmas(self, lemma):
-        return self.semcor.lemma_idx.get(lemma, [])
-
-    def show_lemma(self, lemma):
-        # deprecated, see show senses
-        idx = index_lemmas(self.get_lemmas(lemma))
-        for pos in idx:
-            for sense in idx[pos]:
-                print('\n', BOLD + BLUE, idx[pos][sense][0], END, '\n', sep='')
-                for wf in idx[pos][sense]:
-                    wf.sent.pp(highlight=wf.position)
-        print()
+        return self.semcor.get_lemmas(lemma)
 
     def show_noun(self, lemma):
         idx = index_lemmas(self.get_lemmas(lemma))
@@ -181,25 +166,18 @@ class Browser(object):
             print()
 
     def show_basic_types(self):
-        btypes = self._get_btypes()
+        btypes = self.semcor.get_btypes()
         for bt in sorted(btypes):
             print("%s  %2d pairs" % (bt, len(btypes[bt])))
 
     def show_basic_type(self, bt):
-        btypes = self._get_btypes()
+        btypes = self.semcor.get_btypes()
         pairs = sorted(btypes.get(bt, []))
         for pair in pairs:
             print("%s-%s  %3d instances %2d lemmas" %
                   (pair[0], pair[1],
                    len(self.semcor.noun_idx.btypes_idx[pair]['ALL']),
                    len(self.semcor.noun_idx.btypes_idx[pair]['LEMMAS'])))
-
-    def _get_btypes(self):
-        btypes = {}
-        for bt1, bt2 in self.semcor.noun_idx.btypes_idx.keys():
-            btypes.setdefault(bt1, []).append((bt1, bt2))
-            btypes.setdefault(bt2, []).append((bt1, bt2))
-        return btypes
 
     def show_basic_type_pairs(self):
         pairs = self.semcor.noun_idx.get_pairs(min_lemmas=2, min_instances=4)
